@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function admin() { return signedIn() && request.auth.token.admin == true; }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
+
+    match /users/{uid} {
+      allow read: if admin() || owner(uid);
+      // User may create a harmless profile only, never an admin role.
+      allow create: if owner(uid)
+        && request.resource.data.keys().hasOnly(['displayName','email','createdAt'])
+        && request.resource.data.keys().hasAll(['displayName','email','createdAt'])
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() > 0
+        && request.resource.data.displayName.size() <= 80
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+    match /seats/{seatId} {
+      allow read: if signedIn();
+      allow write: if false; // All state changes occur in trusted Cloud Functions.
+    }
+    match /seatSecrets/{seatId} {
+      allow read: if admin(); // QR token is never accessible to student clients.
+      allow write: if false;
+    }
+    match /activeBookings/{uid} {
+      allow read: if owner(uid) || admin();
+      allow write: if false;
+    }
+    match /bookings/{bookingId} {
+      allow read: if admin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow write: if false;
+    }
+    match /breakSessions/{sessionId} {
+      allow read: if admin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow write: if false;
+    }
+    match /adminAnalytics/{documentId} {
+      allow read: if admin();
+      allow write: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

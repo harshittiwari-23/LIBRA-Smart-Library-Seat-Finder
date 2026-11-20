@@ -1,0 +1,10 @@
+{
+  "firestore": {"rules":"firestore.rules","indexes":"firestore.indexes.json"},
+  "functions": [{"source":"functions","codebase":"default","ignore":["node_modules",".git","firebase-debug.log","firebase-debug.*.log"]}],
+  "hosting": {
+    "public":".",
+    "ignore":["firebase.json","**/.*","**/node_modules/**","functions/**","**/serviceAccount*.json","**/*.pem","firestore.rules","firestore.indexes.json","README.md","TESTING.md","*.zip"],
+    "headers":[{"source":"**","headers":[{"key":"X-Content-Type-Options","value":"nosniff"},{"key":"Referrer-Policy","value":"strict-origin-when-cross-origin"}]}]
+  },
+  "emulators":{"auth":{"port":9099},"firestore":{"port":8080},"functions":{"port":5001},"hosting":{"port":5000},"ui":{"enabled":true}}
+}
